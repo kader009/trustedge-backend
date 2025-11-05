@@ -3,7 +3,7 @@
 This is the **backend service** for **TrustEdge**, a full-stack e-commerce platform for selling plants online.  
 It is built with **Node.js**, **Express.js**, and **MongoDB**, providing secure APIs for authentication, products, orders, carts, blogs, and role-based dashboards.
 
----
+--- 7XUcsLvCHBEB3X6u
 
 ## Backend Tech Stack
 
