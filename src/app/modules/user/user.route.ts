@@ -7,19 +7,19 @@ const router = Router();
 // User / My Profile
 router.get(
   "/me",
-  authMiddleware(["user", "admin", "staff"]),
+  authMiddleware(["user", "admin"]),
   userController.getProfile
 );
 
 router.put(
   "/update-profile",
-  authMiddleware(["user", "admin", "staff"]),
+  authMiddleware(["user", "admin"]),
   userController.updateProfile
 );
 
 router.patch(
   "/update-password",
-  authMiddleware(["user", "admin", "staff"]),
+  authMiddleware(["user", "admin"]),
   userController.updatePassword
 );
 

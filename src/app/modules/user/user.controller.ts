@@ -1,4 +1,3 @@
-// src/modules/users/user.controller.ts
 import { Request, Response } from "express";
 import { userService } from "./user.service";
 import { sendErrorResponse } from "../../../utils/sendErrorResponse";

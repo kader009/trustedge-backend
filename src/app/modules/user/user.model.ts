@@ -7,7 +7,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Name is required"],
       trim: true,
-      minlength: [3, "Name must be at least 3 characters long"],
+      minlength: [5, "Name must be at least 5 characters long"],
     },
     email: {
       type: String,
@@ -22,27 +22,14 @@ const userSchema = new Schema<IUser>(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
     },
-    phone: {
-      type: String,
-      validate: {
-        validator: function (v: string) {
-          return /^(\+?88)?01[3-9]\d{8}$/.test(v); // Bangladeshi phone validation
-        },
-        message: "Please provide a valid phone number",
-      },
-    },
-    address: {
-      type: String,
-      maxlength: [200, "Address cannot exceed 200 characters"],
-    },
     image: {
       type: String,
     },
     role: {
       type: String,
       enum: {
-        values: ["user", "admin", "staff"],
-        message: "Role must be either user, admin, or staff",
+        values: ["user", "admin"],
+        message: "Role must be either user or admin",
       },
       default: "user",
     },

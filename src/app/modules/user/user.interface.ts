@@ -1,4 +1,4 @@
-export type TUserRole = "user" | "admin" | "staff";
+export type TUserRole = "user" | "admin";
 export type TUserStatus = "active" | "inactive" | "banned";
 
 export interface IUser {
@@ -6,12 +6,10 @@ export interface IUser {
   name: string;
   email: string;
   password: string;
-  phone?: string;
-  address?: string;
   image?: string;
   role: TUserRole;
-  status: TUserStatus;
-  isDeleted: boolean;
+  status?: TUserStatus;
+  isDeleted?: boolean;
   createdAt?: Date;
 }
 

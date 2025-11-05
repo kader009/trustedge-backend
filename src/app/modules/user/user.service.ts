@@ -1,4 +1,3 @@
-// src/modules/users/user.service.ts
 import bcrypt from "bcrypt";
 import { User } from "./user.model";
 import { IUpdatePasswordInput, IUser } from "./user.interface";

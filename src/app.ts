@@ -33,7 +33,7 @@ app.use('/api/v1/category', CategoryRoutes);
 app.use('/api/v1/review', reviewRoutes);
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World from Aronyo Backend!');
+  res.send('Welcome to Trustedge Backend!');
 });
 
 export default app;
