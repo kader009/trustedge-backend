@@ -1,6 +1,6 @@
-import { FilterQuery } from "mongoose";
-import { Product } from "./product.model";
-import { IProduct } from "./product.interface";
+import { FilterQuery } from 'mongoose';
+import { Product } from './product.model';
+import { IProduct } from './product.interface';
 
 export class ProductService {
   async createProduct(productData: Partial<IProduct>) {
@@ -9,12 +9,12 @@ export class ProductService {
   }
 
   async getFilterOptions() {
-    const brands = await Product.distinct("brand");
-    const categories = await Product.distinct("category");
-    const tags = await Product.distinct("tags");
+    const brands = await Product.distinct('brand');
+    const categories = await Product.distinct('category');
+    const tags = await Product.distinct('tags');
 
     // FIXED: Use 'size' (singular) instead of 'sizes' (plural)
-    const sizes = await Product.distinct("size");
+    const sizes = await Product.distinct('size');
 
     return {
       brands: brands.filter(Boolean),
@@ -37,7 +37,18 @@ export class ProductService {
       $or: [{ isActive: true }, { isActive: { $exists: false } }],
     };
 
-    return await Product.find(userFilter).skip(skip).limit(limit).sort(sort);
+    return await Product.find(userFilter)
+      .skip(skip)
+      .limit(limit)
+      .sort(sort)
+      .populate({
+        path: 'reviews',
+        select: 'rating comment createdAt user -product',
+        populate: {
+          path: 'user',
+          select: 'name email image',
+        },
+      });
   }
 
   async countProducts(filter: FilterQuery<IProduct>) {
@@ -53,13 +64,31 @@ export class ProductService {
   }
 
   async getProductById(id: string) {
-    return await Product.findById(id).populate("createdBy", "name email");
+    return await Product.findById(id)
+      .populate('createdBy', 'name email')
+      .populate({
+        path: 'reviews',
+        select: 'rating comment createdAt user -product',
+        populate: {
+          path: 'user',
+          select: 'name email image',
+        },
+      });
   }
 
   async getProductBySlug(slug: string) {
-    const product = await Product.findOne({ slug }).lean();
+    const product = await Product.findOne({ slug })
+      .populate({
+        path: 'reviews',
+        select: 'rating comment createdAt user -product',
+        populate: {
+          path: 'user',
+          select: 'name email image',
+        },
+      })
+      .lean();
     if (!product) {
-      throw new Error("Product not found");
+      throw new Error('Product not found');
     }
     return product;
   }
@@ -68,7 +97,7 @@ export class ProductService {
     id: string,
     updateData: Partial<IProduct>
   ): Promise<IProduct | null> {
-    if (!id) throw new Error("Product ID is required");
+    if (!id) throw new Error('Product ID is required');
     return await Product.findOneAndUpdate(
       { _id: id },
       { $set: updateData },

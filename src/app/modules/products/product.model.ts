@@ -1,13 +1,13 @@
-import { Schema, model } from "mongoose";
-import { IProduct } from "./product.interface";
+import { Schema, model } from 'mongoose';
+import { IProduct } from './product.interface';
 
 const productSchema = new Schema<IProduct>(
   {
     title: {
       type: String,
-      required: [true, "Product title is required"],
+      required: [true, 'Product title is required'],
       trim: true,
-      minlength: [3, "Product title must be at least 3 characters long"],
+      minlength: [3, 'Product title must be at least 3 characters long'],
     },
     slug: {
       type: String,
@@ -16,10 +16,10 @@ const productSchema = new Schema<IProduct>(
     },
     description: {
       type: String,
-      required: [true, "Product description is required"],
+      required: [true, 'Product description is required'],
       minlength: [
         10,
-        "Product description must be at least 10 characters long",
+        'Product description must be at least 10 characters long',
       ],
     },
     detailsDesc: {
@@ -28,25 +28,25 @@ const productSchema = new Schema<IProduct>(
     },
     price: {
       type: Number,
-      required: [true, "Product price is required"],
-      min: [0, "Price must be a positive number"],
+      required: [true, 'Product price is required'],
+      min: [0, 'Price must be a positive number'],
     },
     discountPrice: {
       type: Number,
-      min: [0, "Discount price must be a positive number"],
+      min: [0, 'Discount price must be a positive number'],
       validate: {
         validator: function (this: IProduct, value: number) {
           if (this.price == null) return true;
           return value < this.price;
         },
-        message: "Discount price must be less than the original price",
+        message: 'Discount price must be less than the original price',
       },
     },
 
     category: {
       type: String,
-      ref: "Category",
-      required: [true, "Product category is required"],
+      ref: 'Category',
+      required: [true, 'Product category is required'],
     },
 
     brand: {
@@ -55,16 +55,16 @@ const productSchema = new Schema<IProduct>(
     },
     images: {
       type: [String],
-      required: [true, "At least one product image is required"],
+      required: [true, 'At least one product image is required'],
       validate: {
         validator: (v: string[]) => v.length > 0,
-        message: "At least one image must be provided",
+        message: 'At least one image must be provided',
       },
     },
     stock: {
       type: Number,
-      required: [true, "Product stock is required"],
-      min: [0, "Stock must be a non-negative number"],
+      required: [true, 'Product stock is required'],
+      min: [0, 'Stock must be a non-negative number'],
     },
     tags: {
       type: [String],
@@ -74,13 +74,13 @@ const productSchema = new Schema<IProduct>(
     ratings: {
       type: Number,
       default: 0,
-      min: [0, "Ratings must be at least 0"],
-      max: [5, "Ratings cannot exceed 5"],
+      min: [0, 'Ratings must be at least 0'],
+      max: [5, 'Ratings cannot exceed 5'],
     },
     numReviews: {
       type: Number,
       default: 0,
-      min: [0, "Number of reviews must be 0 or more"],
+      min: [0, 'Number of reviews must be 0 or more'],
     },
 
     size: {
@@ -89,22 +89,39 @@ const productSchema = new Schema<IProduct>(
 
     createdBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
     isActive: {
       type: Boolean,
       default: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false, // Hide __v field
+    },
+    toObject: {
+      virtuals: true,
+      versionKey: false,
+    },
+  }
 );
 
-// 🔄 Pre-save hook to auto-generate slug from name
-productSchema.pre("save", function (next) {
-  if (this.isModified("title") || !this.slug) {
-    this.slug = this.title.toLowerCase().replace(/ /g, "-");
+// Virtual field for reviews
+productSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'product',
+});
+
+// Pre-save hook to auto-generate slug from name
+productSchema.pre('save', function (next) {
+  if (this.isModified('title') || !this.slug) {
+    this.slug = this.title.toLowerCase().replace(/ /g, '-');
   }
   next();
 });
 
-export const Product = model<IProduct>("Product", productSchema);
+export const Product = model<IProduct>('Product', productSchema);

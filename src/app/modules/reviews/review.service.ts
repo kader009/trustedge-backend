@@ -1,71 +1,113 @@
-// import { IReview } from "./review.interface";
-// import { Review } from "./review.model";
+import { Review } from "./review.model";
+import { IReview } from "./review.interface";
+import { Product } from "../products/product.model";
 
-// class ReviewService {
-//   async createOrUpdateReview(
-//     userId: string,
-//     orderId: string,
-//     rating: number,
-//     comment: string
-//   ): Promise<IReview> {
-//     // Directly create a new review
-//     const review = await new Review({
-//       userId,
-//       orderId,
-//       rating,
-//       comment,
-//       isActive: true,
-//     }).save();
+const createReview = async (payload: IReview) => {
+  // Check if user already reviewed this product
+  const existing = await Review.findOne({
+    product: payload.product,
+    user: payload.user,
+  });
 
-//     // --- Update Order to mark as reviewed ---
-//     const order = await Order.findById(orderId);
-//     if (order) {
-//       order.isReviewed = true; // add new property if not exists or update
-//       await order.save();
-//     }
+  if (existing) {
+    throw new Error("You have already reviewed this product.");
+  }
 
-//     return review;
-//   }
+  const review = await Review.create(payload);
 
-//   async getAllActiveReviews() {
-//     return Review.find({ isActive: true })
-//       .populate("userId", "name email image")
-//       .sort({ createdAt: -1 });
-//   }
+  // Update Product rating after save
+  const stats = await Review.aggregate([
+    { $match: { product: payload.product } },
+    {
+      $group: {
+        _id: "$product",
+        numReviews: { $sum: 1 },
+        avgRating: { $avg: "$rating" },
+      },
+    },
+  ]);
 
-//   async getAllReviews() {
-//     return Review.find().populate("userId", "name email image");
-//   }
+  if (stats.length > 0) {
+    await Product.findByIdAndUpdate(payload.product, {
+      numReviews: stats[0].numReviews,
+      ratings: stats[0].avgRating,
+    });
+  }
 
-//   async deleteReview(reviewId: string) {
-//     // Find the review first
-//     const review = await Review.findById(reviewId);
-//     if (!review) {
-//       throw new Error("Review not found");
-//     }
+  return review;
+};
 
-//     const orderId = review.orderId;
+const getAllReviews = async (productId?: string) => {
+  const filter = productId ? { product: productId } : {};
+  return await Review.find(filter)
+    .populate("user", "name email")
+    .populate("product", "title slug price");
+};
 
-//     // Delete the review
-//     await Review.findByIdAndDelete(reviewId);
+const getSingleReview = async (id: string) => {
+  return await Review.findById(id)
+    .populate("user", "name email")
+    .populate("product", "title slug price");
+};
 
-//     // Update the order to mark it as not reviewed
-//     const order = await Order.findById(orderId);
-//     if (order) {
-//       order.isReviewed = false; // mark as not reviewed
-//       await order.save();
-//     }
+const updateReview = async (id: string, userId: string, payload: Partial<IReview>) => {
+  const review = await Review.findById(id);
+  if (!review) throw new Error("Review not found.");
+  if (review.user.toString() !== userId) throw new Error("Unauthorized.");
 
-//     return { success: true, message: "Review deleted and order updated" };
-//   }
+  const updated = await Review.findByIdAndUpdate(id, payload, { new: true });
 
-//   async updateReviewStatus(reviewId: string, isActive: boolean) {
-//     return Review.findByIdAndUpdate(
-//       reviewId,
-//       { isActive },
-//       { new: true, runValidators: true }
-//     );
-//   }
-// }
+  // Recalculate product rating
+  const stats = await Review.aggregate([
+    { $match: { product: review.product } },
+    {
+      $group: {
+        _id: "$product",
+        numReviews: { $sum: 1 },
+        avgRating: { $avg: "$rating" },
+      },
+    },
+  ]);
+  await Product.findByIdAndUpdate(review.product, {
+    numReviews: stats[0]?.numReviews || 0,
+    ratings: stats[0]?.avgRating || 0,
+  });
 
-// export const reviewService = new ReviewService();
+  return updated;
+};
+
+const deleteReview = async (id: string, userId: string, isAdmin = false) => {
+  const review = await Review.findById(id);
+  if (!review) throw new Error("Review not found.");
+
+  if (!isAdmin && review.user.toString() !== userId)
+    throw new Error("Unauthorized.");
+
+  await Review.findByIdAndDelete(id);
+
+  // Update product stats
+  const stats = await Review.aggregate([
+    { $match: { product: review.product } },
+    {
+      $group: {
+        _id: "$product",
+        numReviews: { $sum: 1 },
+        avgRating: { $avg: "$rating" },
+      },
+    },
+  ]);
+  await Product.findByIdAndUpdate(review.product, {
+    numReviews: stats[0]?.numReviews || 0,
+    ratings: stats[0]?.avgRating || 0,
+  });
+
+  return { message: "Review deleted successfully." };
+};
+
+export const ReviewService = {
+  createReview,
+  getAllReviews,
+  getSingleReview,
+  updateReview,
+  deleteReview,
+};

@@ -1,83 +1,94 @@
-import { Request, Response } from "express";
-import { reviewService } from "./review.service";
-import { sendErrorResponse } from "../../../utils/sendErrorResponse";
+import { Request, Response } from 'express';
+import { ReviewService } from './review.service';
+import { sendErrorResponse } from '../../../utils/sendErrorResponse';
 
 export const reviewController = {
-  async createReview(req: Request, res: Response) {
+  async createReview(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.user!.userId;
-      const { orderId, rating, comment } = req.body;
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
 
-      const review = await reviewService.createOrUpdateReview(
-        userId,
-        orderId,
-        rating,
-        comment
-      );
+      const reviewData = { ...req.body, user: userId };
+      const result = await ReviewService.createReview(reviewData);
 
       res.status(201).json({
         success: true,
-        data: review,
-        message: "Review saved successfully",
+        message: 'Review created successfully',
+        data: result,
       });
     } catch (error) {
       sendErrorResponse(error, res);
     }
   },
 
-  async getActiveReviews(req: Request, res: Response) {
+  async getAllReviews(req: Request, res: Response): Promise<void> {
     try {
-      const reviews = await reviewService.getAllActiveReviews();
-      res.status(200).json({ success: true, data: reviews });
+      const productId = req.query.productId as string;
+      const result = await ReviewService.getAllReviews(productId);
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       sendErrorResponse(error, res);
     }
   },
 
-  async getAllReviews(req: Request, res: Response) {
+  async getSingleReview(req: Request, res: Response): Promise<void> {
     try {
-      const reviews = await reviewService.getAllReviews();
-      res.status(200).json({ success: true, data: reviews });
+      const result = await ReviewService.getSingleReview(req.params.id);
+      if (!result) {
+        res.status(404).json({ success: false, message: 'Review not found' });
+        return;
+      }
+      res.status(200).json({ success: true, data: result });
     } catch (error) {
       sendErrorResponse(error, res);
     }
   },
 
-  async deleteReview(req: Request, res: Response) {
+  async updateReview(req: Request, res: Response): Promise<void> {
     try {
-      const reviewId = req.params.id;
-      await reviewService.deleteReview(reviewId);
-      res.status(200).json({
-        success: true,
-        message: "Review deleted successfully",
-      });
-    } catch (error) {
-      sendErrorResponse(error, res);
-    }
-  },
-
-  // Admin only
-  async updateReviewStatus(req: Request, res: Response) {
-    try {
-      const reviewId = req.params.id;
-      const { isActive } = req.body;
-
-      const updatedReview = await reviewService.updateReviewStatus(
-        reviewId,
-        isActive
-      );
-
-      if (!updatedReview) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Review not found" });
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
       }
 
+      const result = await ReviewService.updateReview(
+        req.params.id,
+        userId,
+        req.body
+      );
+
       res.status(200).json({
         success: true,
-        data: updatedReview,
-        message: `Review status updated to ${isActive ? "Active" : "Inactive"}`,
+        message: 'Review updated successfully',
+        data: result,
       });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
+
+  async deleteReview(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const userRole = req.user?.role;
+
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
+      const isAdmin = userRole === 'admin';
+      const result = await ReviewService.deleteReview(
+        req.params.id,
+        userId,
+        isAdmin
+      );
+
+      res.status(200).json({ success: true, message: result.message });
     } catch (error) {
       sendErrorResponse(error, res);
     }

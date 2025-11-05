@@ -1,37 +1,28 @@
-import { Router } from "express";
-import { reviewController } from "./review.controller";
-import { authMiddleware } from "../../middlewares/auth.middleware";
+import express from 'express';
+import { reviewController } from './review.controller';
+import { authMiddleware } from '../../middlewares/auth.middleware';
 
-const router = Router();
+const router = express.Router();
 
-// User routes
+router.get('/', reviewController.getAllReviews);
+router.get('/:id', reviewController.getSingleReview);
+
 router.post(
-  "/add-review",
-  authMiddleware(["user", "admin", "staff"]),
+  '/',
+  authMiddleware(['user', 'admin']),
   reviewController.createReview
+); 
+
+router.patch(
+  '/:id',
+  authMiddleware(['user', 'admin']),
+  reviewController.updateReview
 );
 
 router.delete(
-  "/delete-review/:id",
-  authMiddleware(["user", "admin"]),
+  '/:id',
+  authMiddleware(['user', 'admin']),
   reviewController.deleteReview
-);
-
-// Admin only
-router.put(
-  "/update-status/:id",
-  authMiddleware(["admin", "staff"]),
-  reviewController.updateReviewStatus
-);
-
-// Random active reviews
-router.get("/active-reviews", reviewController.getActiveReviews);
-
-// Admin: all reviews
-router.get(
-  "/all-reviews",
-  authMiddleware(["admin"]),
-  reviewController.getAllReviews
 );
 
 export const reviewRoutes = router;
