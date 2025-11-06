@@ -34,6 +34,11 @@ const reviewSchema = new Schema<IReview>(
       default: 0,
       min: [0, 'Downvote count cannot be negative'],
     },
+    commentCount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Comment count cannot be negative'],
+    },
   },
   {
     timestamps: true,

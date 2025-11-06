@@ -7,6 +7,7 @@ import { productRoutes } from './app/modules/products/product.route';
 import { CategoryRoutes } from './app/modules/category/category.route';
 import { reviewRoutes } from './app/modules/reviews/review.route';
 import { voteRoutes } from './app/modules/votes/vote.route';
+import { commentRoutes } from './app/modules/comments/comment.route';
 
 const app: Application = express();
 
@@ -33,6 +34,7 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/category', CategoryRoutes);
 app.use('/api/v1/review', reviewRoutes);
 app.use('/api/v1/votes', voteRoutes);
+app.use('/api/v1/comments', commentRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to Trustedge Backend!');

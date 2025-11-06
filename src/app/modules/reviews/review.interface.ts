@@ -8,6 +8,7 @@ export interface IReview {
   comment?: string;
   upvoteCount?: number; // Total upvotes
   downvoteCount?: number; // Total downvotes
+  commentCount?: number; // Total comments
   createdAt?: Date;
   updatedAt?: Date;
 }
