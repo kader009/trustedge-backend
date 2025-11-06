@@ -128,4 +128,164 @@ export const reviewController = {
       sendErrorResponse(error, res);
     }
   },
+
+  // ==================== ADMIN MODERATION ====================
+
+  // Get pending reviews
+  async getPendingReviews(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await ReviewService.getPendingReviews();
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
+
+  // Approve a review
+  async approveReview(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await ReviewService.approveReview(id);
+
+      res.status(200).json({
+        success: true,
+        message: 'Review approved successfully',
+        data: result,
+      });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
+
+  // Unpublish a review
+  async unpublishReview(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      if (!reason) {
+        res.status(400).json({
+          success: false,
+          message: 'Moderation reason is required',
+        });
+        return;
+      }
+
+      const result = await ReviewService.unpublishReview(id, reason);
+
+      res.status(200).json({
+        success: true,
+        message: 'Review unpublished successfully',
+        data: result,
+      });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
+
+  // Get reviews by status
+  async getReviewsByStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { status } = req.params;
+
+      if (!['pending', 'published', 'unpublished'].includes(status)) {
+        res.status(400).json({
+          success: false,
+          message:
+            'Invalid status. Must be: pending, published, or unpublished',
+        });
+        return;
+      }
+
+      const result = await ReviewService.getReviewsByStatus(
+        status as 'pending' | 'published' | 'unpublished'
+      );
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
+
+  // ==================== SEARCH & FILTER ====================
+
+  // Search and filter reviews
+  async searchReviews(req: Request, res: Response): Promise<void> {
+    try {
+      const {
+        keyword,
+        category,
+        rating,
+        status,
+        isPremium,
+        sort,
+        order,
+        page,
+        limit,
+      } = req.query;
+
+      const options = {
+        keyword: keyword as string,
+        category: category as string,
+        rating: rating ? Number(rating) : undefined,
+        status: status as 'pending' | 'published' | 'unpublished',
+        isPremium:
+          isPremium === 'true'
+            ? true
+            : isPremium === 'false'
+            ? false
+            : undefined,
+        sort: sort as 'date' | 'rating' | 'votes',
+        order: order as 'asc' | 'desc',
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+      };
+
+      const result = await ReviewService.searchAndFilterReviews(options);
+
+      res.status(200).json({
+        success: true,
+        data: result.reviews,
+        pagination: result.pagination,
+      });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
+
+  // Get premium reviews
+  async getPremiumReviews(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await ReviewService.getPremiumReviews();
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
+
+  // Get review preview (for premium)
+  async getReviewPreview(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await ReviewService.getReviewPreview(id);
+
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      sendErrorResponse(error, res);
+    }
+  },
 };
