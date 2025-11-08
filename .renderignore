@@ -1,0 +1,10 @@
+src/
+*.ts
+tsconfig.json
+.env
+.env.local
+.git/
+.gitignore
+node_modules/
+*.md
+eslint.config.mjs
