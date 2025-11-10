@@ -1,44 +1,58 @@
+/* eslint-disable no-console */
 import mongoose from 'mongoose';
 import config from '../app/config';
 
-let isConnected = false;
+// Type declaration for global mongoose cache
+declare global {
+  var mongooseCache: {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+  };
+}
+
+// Initialize cache
+let cached = globalThis.mongooseCache;
+
+if (!cached) {
+  cached = globalThis.mongooseCache = {
+    conn: null,
+    promise: null,
+  };
+}
 
 export const connectDB = async () => {
-  // If already connected, return
-  if (isConnected && mongoose.connection.readyState === 1) {
-    console.log('Using existing database connection');
-    return;
+  // If we have a cached connection, return it
+  if (cached.conn) {
+    console.log('Using cached database connection');
+    return cached.conn;
   }
 
-  try {
-    // Configure mongoose for serverless
+  // If we don't have a cached promise, create one
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false, // Disable mongoose buffering for serverless
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
+
     mongoose.set('strictQuery', false);
 
-    const db = await mongoose.connect(config.database_uri as string, {
-      bufferCommands: false, // Disable mongoose buffering
-      maxPoolSize: 10, // Maintain up to 10 socket connections
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      socketTimeoutMS: 45000,
-    });
-
-    isConnected = db.connection.readyState === 1;
-    console.log('✅ MongoDB connected successfully');
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    throw error;
-  }
-};
-
-export const disconnectDB = async () => {
-  if (!isConnected) {
-    return;
+    cached.promise = mongoose
+      .connect(config.database_uri as string, opts)
+      .then((mongooseInstance) => {
+        console.log('MongoDB connected successfully');
+        return mongooseInstance;
+      });
   }
 
   try {
-    await mongoose.disconnect();
-    isConnected = false;
-    console.log('MongoDB disconnected');
-  } catch (error) {
-    console.error('Error disconnecting from MongoDB:', error);
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    console.error('MongoDB connection error:', e);
+    throw e;
   }
+
+  return cached.conn;
 };
