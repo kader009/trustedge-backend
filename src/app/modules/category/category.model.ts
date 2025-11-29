@@ -12,7 +12,6 @@ const categorySchema = new Schema<ICategory>(
     },
     slug: {
       type: String,
-      unique: true,
       lowercase: true,
       trim: true,
     },
