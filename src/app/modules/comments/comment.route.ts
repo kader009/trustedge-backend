@@ -73,4 +73,11 @@ router.get(
   commentController.getUserComments
 );
 
+// Get ALL comments across all reviews (admin only)
+router.get(
+  '/admin/all-comments',
+  authMiddleware(['admin']),
+  commentController.getAllComments
+);
+
 export const commentRoutes = router;
