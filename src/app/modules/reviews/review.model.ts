@@ -57,7 +57,7 @@ const reviewSchema = new Schema<IReview>(
         values: ['pending', 'published', 'unpublished'],
         message: 'Status must be pending, published, or unpublished',
       },
-      default: 'pending',
+      default: 'published',
     },
     moderationReason: {
       type: String,
